@@ -1,32 +1,79 @@
-# Azure User Management
+# Gerenciamento de Usuários Azure
 
-A modularized approach to Terraform for Azure
+Uma abordagem modularizada usando Terraform para Azure
 
-## Overview
+## Visão Geral
 
-Manage many users and provision required resources.
+Este projeto automatiza o gerenciamento de múltiplos usuários e o provisionamento de recursos necessários no Azure usando Terraform.
 
-The user management security group can have associated Azure AD roles, if supported by the Tenant AD License.
+### Funcionalidades Principais
 
-Each user is provisioned one of more Resource Groups with zero or more associated roles and a Storage Account with a File Share.
+#### 1. Gerenciamento de Usuários e Grupos
+- Criação automática de usuários no Azure AD
+- Configuração de grupo de segurança para treinamento
+- Atribuição de funções do Azure AD (se suportado pela licença do tenant)
 
-A bastion host and Linux or Windows VM is provisioned when
+#### 2. Provisionamento de Recursos por Usuário
+Cada usuário recebe:
+- **Resource Groups**: Um ou mais grupos de recursos com funções associadas
+- **Storage Account**: Conta de armazenamento com File Share para CloudShell
+- **Funções RBAC**: Contributor e User Access Administrator no Resource Group
 
-- locals `bastion_host_support` is `true`
-- locals resource_groups map attribute `bastion` is true
-- locals resource_groups map attribute `bastion_host_type` is either `lin` for `linux` or `win` for `windows`
+#### 3. Infraestrutura de Bastion (Opcional)
+Um bastion host e VM (Linux ou Windows) são provisionados quando:
+- `bastion_host_support` = `true` em locals
+- Atributo `bastion` = `true` no mapa resource_groups
+- `bastion_host_type` = `"lin"` (Linux) ou `"win"` (Windows)
 
-> Review `locals_user_environment_setup.tf` for more details
+**Componentes do Bastion:**
+- Virtual Network com subnets (AzureBastionSubnet e utility)
+- Network Security Group com regras de firewall
+- Public IPs para bastion e acesso a serviços
+- VM Linux (Ubuntu 18.04) ou Windows (Windows 10 Pro)
 
-A Service Principal per user is provisioned when
+> 📋 Revise `locals_user_environment_setup.tf` para configurações detalhadas
 
-- locals `per_user_service_principle` is `true`
-  - must be set to `true` to support Bastion Sharable Links. Bastion Shareable Links are created using each user's Service Principal
+#### 4. Service Principals por Usuário (Opcional)
+Um Service Principal por usuário é criado quando:
+- `per_user_service_principal` = `true`
+- **Obrigatório** para suporte a Bastion Shareable Links
+- Os links compartilháveis são criados usando o Service Principal de cada usuário
 
-Set Service Principal Role with
+**Configuração de Função:**
+```hcl
+per_user_service_principal_role = "Owner"  # ou outra função
+```
 
-- locals `per_user_service_principle_role` = "RoleName"
+## Configuração e Uso
 
-## Cloning and Pulling Requirement
+### Pré-requisitos
+1. Terraform >= 1.0.0
+2. Azure CLI configurado
+3. Permissões adequadas no Azure AD e Subscription
 
-When running `git clone` or `git pull` on this repository be sure to add the `--recurse-submodules` flag.
+### Clonagem do Repositório
+⚠️ **Importante**: Sempre use a flag `--recurse-submodules`:
+```bash
+git clone --recurse-submodules <repository-url>
+git pull --recurse-submodules
+```
+
+### Configuração Inicial
+1. Copie `terraform.tfvars_example` para `terraform.tfvars`
+2. Configure as variáveis necessárias:
+   - `user_principal_name_ext`: Domínio do tenant
+   - `training_group_owners`: Proprietários do grupo
+   - `user_password`: Senha padrão dos usuários
+   - `user_prefix`: Prefixo dos nomes de usuário
+   - `user_count` e `user_start`: Quantidade e numeração inicial
+
+### Estrutura de Arquivos Importantes
+- `locals_user_environment_setup.tf`: Configurações principais
+- `terraform.tfvars`: Variáveis de ambiente
+- `scripts/`: Scripts auxiliares para bastion links
+- Módulos `module_*`: Recursos Azure organizados por tipo
+
+### Outputs Gerados
+- Arquivo CSV com credenciais dos usuários
+- Scripts para criação de Bastion Shareable Links
+- Informações de recursos provisionados
