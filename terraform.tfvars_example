@@ -1,0 +1,13 @@
+user_principal_name_ext = "@fortinetcloud.onmicrosoft.com"
+
+training_group_owners = [
+  "name1@domain",
+  "name2@domain"
+]
+
+user_password = "password"
+
+user_prefix = "student"
+
+user_count = 1
+user_start = 12
