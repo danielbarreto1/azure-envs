@@ -9,10 +9,6 @@ resource "azurerm_resource_group_policy_assignment" "resource_group_policy_assig
   resource_group_id    = module.module_azurerm_resource_group[each.value.resource_group_name].resource_group.id
   policy_definition_id = data.azurerm_policy_definition.policy_definition.id
 
-  non_compliance_message {
-    content = "Only West US 3 is allowed for resource creation."
-  }
-
   parameters = <<PARAMETERS
   {
       "listOfAllowedLocations": {
